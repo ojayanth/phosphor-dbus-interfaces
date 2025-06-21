@@ -1,0 +1,172 @@
+description: >
+    This interface allows clients to perform Redfish Device Enablement (RDE)
+    operations across Redfish-capable devices. It supports payload execution,
+    schema introspection, and capability queries via centralized methods.
+    Operations initiated here are tracked via OperationTask objects.
+
+service_names:
+    - default: xyz.openbmc_project.RDE.Manager
+
+methods:
+    - name: StartRedfishOperation
+      description: >
+          Begin execution of a Redfish operation on the target device. Returns a
+          D-Bus object path for tracking asynchronous progress through an
+          OperationTask instance.
+      parameters:
+          - name: OperationID
+            type: uint32
+            description: >
+                Unique identifier for this operation lifecycle. This ID must be
+                supplied by the caller and reused for any related commands
+                (e.g., cancellation, polling). Enables multi-phase tracking and
+                client-side logical correlation.
+
+          - name: OperationType
+            type: enum[xyz.openbmc_project.RDE.Common.OperationType]
+            description: >
+                Type of Redfish operation to perform.
+
+          - name: TargetURI
+            type: string
+            description: >
+                URI of the target Redfish resource or action.
+
+          - name: DeviceUUID
+            type: string
+            description: >
+                Uniquely identifies the target device instance.
+
+          - name: EID
+            type: byte
+            optional: true
+            description: >
+                Optional endpoint identifier for MCTP or similar transport. Omit
+                for protocols that do not use EID or when resolved internally.
+
+          - name: Payload
+            type: string
+            description: >
+                Redfish payload content, either embedded inline as a JSON/BEJ
+                string, or provided as an external file path reference.
+
+          - name: PayloadFormat
+            type: enum[self.PayloadFormatType]
+            default: Inline
+            optional: true
+            description: >
+                Specifies whether the payload is embedded inline or referenced
+                via external file path.
+
+          - name: EncodingFormat
+            type: enum[self.EncodingFormatType]
+            default: JSON
+            optional: true
+            description: >
+                Encoding format of the payload. Choose 'JSON' for plain text or
+                'BEJ' for compact binary. JSON is the default for broader
+                compatibility.
+
+          - name: SessionId
+            type: string
+            optional: true
+            description: >
+                Optional grouping label used to associate multiple operations
+                under a logical client session. Useful for long-running tasks,
+                audit logging, or correlation across coordinated workflows.
+
+      returns:
+          - name: Path
+            type: object_path
+            description: >
+                D-Bus object path for the xyz.openbmc_project.RDE.OperationTask
+                created for this operation. This object allows clients to
+                monitor execution progress, retrieve response metadata, and
+                manage task lifecycle.
+
+      errors:
+          - xyz.openbmc_project.Common.Error.InternalFailure
+          - xyz.openbmc_project.Common.Error.InvalidArgument
+          - xyz.openbmc_project.Common.Error.NotAllowed
+          - xyz.openbmc_project.Common.Error.Unavailable
+
+    - name: GetDeviceSchemaInfo
+      description: >
+          Retrieve the schema metadata for a specific target device as exposed
+          via SchemaResources. This includes Redfish-compatible URI fragments,
+          schema types, and supported operations.
+      parameters:
+          - name: DeviceUUID
+            type: string
+            description: >
+                Uniquely identifies the target device.
+      returns:
+          - name: SchemaInfo
+            type: dict[string,dict[string,variant[int64,string]]]
+            description: >
+                Dictionary of schema metadata indexed by resource ID, aligned
+                with the SchemaResourceKeys definition.
+      errors:
+          - xyz.openbmc_project.Common.Error.Unavailable
+          - xyz.openbmc_project.Common.Error.InternalFailure
+
+    - name: GetSupportedOperations
+      description: >
+          Report the list of supported Redfish operations for a specified target
+          device.
+      parameters:
+          - name: DeviceUUID
+            type: string
+            description: >
+                Uniquely identifies the target device.
+      returns:
+          - name: SupportedOps
+            type: array[enum[xyz.openbmc_project.RDE.Common.OperationType]]
+            description: >
+                Operations supported by the device, determined via capability
+                discovery.
+      errors:
+          - xyz.openbmc_project.Common.Error.InternalFailure
+
+enumerations:
+    - name: PayloadFormatType
+      description: >
+          Specifies how the payload content is provided.
+      values:
+          - name: Inline
+            description: >
+                Payload is embedded as a direct string.
+          - name: FilePath
+            description: >
+                Payload is supplied via an external file reference.
+
+    - name: EncodingFormatType
+      description: >
+          Specifies the encoding of the payload content.
+      values:
+          - name: JSON
+            description: >
+                Plaintext JSON format. Default encoding for client
+                compatibility.
+          - name: BEJ
+            description: >
+                Binary Encoded JSON format. Used in constrained transports.
+
+    - name: SchemaOutputFormat
+      description: >
+          Defines the return format for schema queries.
+      values:
+          - name: JsonData
+            description: >
+                Return schema as an inline JSON string.
+          - name: FilePath
+            description: >
+                Return schema via a file reference or URI.
+
+paths:
+    - namespace: /xyz/openbmc_project/rde
+      segments:
+          - name: BMC
+            value: bmc
+          - name: System
+            value: system

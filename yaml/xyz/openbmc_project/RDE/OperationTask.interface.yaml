@@ -1,0 +1,81 @@
+description: >
+    Tracks the execution status of a Redfish Device Enablement (RDE) operation.
+    Exposes async lifecycle properties, cancellation method, and progress
+    signals for clients monitoring long-running tasks.
+
+interface: xyz.openbmc_project.RDE.OperationTask
+
+properties:
+    - name: Status
+      type: enum[self.Status]
+      description: >
+          Current lifecycle state of the operation.
+
+    - name: CompletionCode
+      type: enum[self.CompletionCode]
+      description: >
+          Final completion code representing the outcome of the operation. Valid
+          only when Status is Completed or Failed. Values follow Redfish-style
+          semantics or PLDM response codes.
+
+methods:
+    - name: Cancel
+      description: >
+          Cancel the operation if it is still pending or running. Cancellation
+          may result in a transition to Failed with an updated CompletionCode.
+
+signals:
+    - name: TaskUpdated
+      description: >
+          Emitted when any of the task’s properties change. Useful for observers
+          tracking lifecycle progress. This signal includes a dictionary of
+          updated task properties in the `changed` argument. Expected keys
+          include:
+            - "payload": string (JSON-formatted)
+            - "return_code": uint16
+      args:
+          - name: changed
+            type: dict[string, variant]
+
+enumerations:
+    - name: Status
+      description: >
+          Represents the current lifecycle state of the operation.
+      values:
+          - name: Pending
+            description: >
+                The operation has been accepted but has not yet started.
+          - name: Running
+            description: >
+                The operation is actively executing.
+          - name: Completed
+            description: >
+                The operation finished successfully.
+          - name: Failed
+            description: >
+                The operation terminated due to an error or cancellation.
+
+    - name: CompletionCode
+      description: >
+          Indicates the result of the operation using standardized codes. These
+          may be mapped to Redfish Message Registry entries or PLDM completion
+          codes.
+      values:
+          - name: Success
+            description: >
+                Operation completed successfully.
+          - name: InvalidInput
+            description: >
+                The input parameters were invalid or malformed.
+          - name: Timeout
+            description: >
+                The operation timed out before completion.
+          - name: InternalError
+            description: >
+                An internal service error occurred.
+          - name: Canceled
+            description: >
+                Operation was canceled by the client.
+          - name: Unsupported
+            description: >
+                Operation or requested feature is not supported.

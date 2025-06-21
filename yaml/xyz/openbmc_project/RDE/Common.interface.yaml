@@ -1,0 +1,89 @@
+enumerations:
+    - name: OperationType
+      description: >
+          Represents individual operations that can be performed on system
+          resources. These types align with typical RESTful interface behavior.
+      values:
+          - name: HEAD
+            value: "HEAD"
+            description: >
+                Check if a resource is accessible without retrieving its
+                content.
+          - name: READ
+            value: "READ"
+            description: >
+                Retrieve a resource or collection (commonly associated with HTTP
+                GET).
+          - name: CREATE
+            value: "CREATE"
+            description: >
+                Create a new resource (commonly associated with HTTP POST).
+          - name: DELETE
+            value: "DELETE"
+            description: >
+                Remove an existing resource.
+          - name: UPDATE
+            value: "UPDATE"
+            description: >
+                Apply partial modifications to a resource (commonly associated
+                with HTTP PATCH).
+          - name: REPLACE
+            value: "REPLACE"
+            description: >
+                Fully replace an existing resource with a new version (commonly
+                associated with HTTP PUT).
+          - name: ACTION
+            value: "ACTION"
+            description: >
+                Perform a defined operation on a resource, typically involving
+                custom or parameterized behavior.
+
+    - name: SchemaResourceKeys
+      description: >
+          Canonical key names allowed in each dictionary entry of the
+          SchemaResources property. These fields describe schema metadata used
+          for Redfish URI resolution, dynamic type construction, operation
+          dispatch, and OEM action support.
+      values:
+          - name: subUri
+            description: >
+                Relative Redfish URI path fragment used for request matching.
+
+          - name: schemaName
+            description: >
+                Redfish schema class name used in @odata.type (e.g.,
+                "Processor").
+
+          - name: schemaVersion
+            description: >
+                Semantic schema version string (e.g., "1.2.0").
+
+          - name: schemaClass
+            description: >
+                Optional classification byte used to categorize schema type or
+                grouping.
+
+          - name: operations
+            description: >
+                List of supported Redfish HTTP verbs (e.g., ["GET", "PATCH"]).
+
+          - name: ProposedContainingResourceName
+            description: >
+                Logical container or parent resource name (optional).
+
+          - name: OEMExtensions
+            description: >
+                List of OEM-specific subURIs or schema augmentations (optional).
+
+          - name: Actions
+            description: >
+                Array of dictionaries defining supported Redfish actions.
+
+          - name: ActionName
+            description: >
+                Redfish action label (e.g., "Reset").
+
+          - name: ActionPath
+            description: >
+                SubURI fragment used to invoke the action (e.g.,
+                "Actions/Reset").

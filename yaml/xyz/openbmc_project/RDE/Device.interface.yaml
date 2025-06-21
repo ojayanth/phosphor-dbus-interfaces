@@ -1,0 +1,144 @@
+description: >
+    Represents a Redfish Device Enablement (RDE) device discovered and managed
+    by the BMC.  This object abstracts the logical representation of a
+    Redfish-accessible endpoint and is instantiated for each device detected via
+    supported transports such as PLDM.
+
+    It may optionally implement `xyz.openbmc_project.Common.UUID` to support
+    hot-plug devices or those with multiple logical endpoints.
+
+service_names:
+    - default: xyz.openbmc_project.RDE.Device
+
+properties:
+    - name: Name
+      type: string
+      description: >
+          Human-readable device name or alias used for diagnostics and interface
+          identification.
+      flags:
+          - readonly
+
+    - name: DeviceUUID
+      type: string
+      description: >
+          Globally unique identifier assigned to this RDE device, allowing
+          transport-agnostic correlation.
+      flags:
+          - readonly
+
+    - name: EID
+      type: byte
+      default: 0
+      optional: true
+      description: >
+          Endpoint Identifier (EID) used in MCTP transports. Not applicable to
+          non-MCTP devices.
+      flags:
+          - readonly
+
+    - name: SupportedOps
+      type: array[enum[xyz.openbmc_project.RDE.Common.OperationType]]
+      description: >
+          Set of Redfish operation types (e.g., GET, PATCH) supported by the
+          device per PLDM negotiation.
+      flags:
+          - readonly
+
+    - name: SupportedFeatures
+      type: array[enum[self.FeatureType]]
+      description: >
+          Protocol-level feature flags such as Redfish Event delivery or BEJ
+          encoding support.
+      flags:
+          - readonly
+
+    - name: NegotiationStatus
+      type: enum[self.NegotiationStatus]
+      description: >
+          Current capability negotiation state between the BMC and the RDE
+          device.
+      flags:
+          - readonly
+
+    - name: SchemaResources
+      type: dict[string,dict[string,variant[int64,string]]]
+      description: >
+          Dictionary of Redfish schema descriptors indexed by resource ID (as
+          string). Each entry is a nested dictionary that may include the
+          following metadata keys as defined in the SchemaResourceKeys
+          enumeration.
+
+          Example
+              "500": {
+                  "schemaName": "PortMetrics",
+                  "schemaVersion": "1.1.0",
+                  "subUri": "NetworkAdapterCollection/Ports/0/Metrics",
+                  "operations": ["GET", "PATCH"]
+              }
+      flags:
+          - readonly
+
+methods:
+    - name: RefreshDeviceInfo
+      description: >
+          Initiates a refresh of device schema descriptors and feature
+          negotiation. SchemaResources and SupportedOps may be updated as a
+          result.
+      in: []
+      out: []
+
+signals:
+    - name: DeviceUpdated
+      description: >
+          Emitted when the device metadata or exposed properties are modified
+          due to runtime refresh or dynamic reconfiguration.
+      args:
+          - name: changed
+            type: dict[string, variant]
+
+associations:
+    - name: binds_to_endpoint
+      description: >
+          Indicates that this logical RDE device is bound to a transport
+          endpoint.
+      reverse_name: hosts_rde_device
+      required_endpoint_interfaces:
+          - xyz.openbmc_project.MCTP.Endpoint
+
+enumerations:
+    - name: FeatureType
+      description: >
+          Redfish protocol capabilities supported by the device.
+
+      values:
+          - name: BEJ
+            description: >
+                Supports Binary Encoded JSON (BEJ) v1.1 format.
+          - name: EVENTS
+            description: >
+                Supports Redfish Events or asynchronous task mechanisms.
+          - name: ACTIONS
+            description: >
+                Supports Redfish Actions as defined in schema.
+
+    - name: NegotiationStatus
+      description: >
+          State of capability negotiation with the device.
+
+      values:
+          - name: NotStarted
+            description: >
+                Negotiation has not yet been initiated.
+          - name: InProgress
+            description: >
+                Negotiation is currently underway.
+          - name: Success
+            description: >
+                Negotiation completed successfully.
+          - name: Failed
+            description: >
+                Negotiation attempt failed; no usable capabilities detected.
+          - name: Partial
+            description: >
+                Negotiation succeeded but returned partial capability data.
